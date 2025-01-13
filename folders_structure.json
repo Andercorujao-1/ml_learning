@@ -1,0 +1,98 @@
+{
+    "project_name": "python_estudo",
+    "last_updated": "2025-01-13 00:14:26",
+    "folders": {
+        "files": [
+            "folders_structure.json",
+            "pyproject.toml",
+            "__init__.py"
+        ],
+        ".vscode": {
+            "files": [
+                "settings.json"
+            ]
+        },
+        "src": {
+            "files": [
+                "__init__.py"
+            ],
+            "python_estudo": {
+                "files": [
+                    "main.py",
+                    "__init__.py"
+                ],
+                "data": {
+                    "files": [
+                        "data_interface.py",
+                        "validade_windows_path.py",
+                        "__init__.py"
+                    ],
+                    "api_data": {
+                        "files": [
+                            "api_data_interface.py",
+                            "generic_api_fetcher.py"
+                        ]
+                    },
+                    "csv_data": {
+                        "files": [
+                            "csv_data_interface.py",
+                            "generic_csv_fetcher.py"
+                        ]
+                    },
+                    "database_data": {
+                        "files": [
+                            "database_data_interface.py",
+                            "generic_sqlalchemy_fetcher.py"
+                        ]
+                    }
+                },
+                "feature_graph_visualization": {
+                    "files": [
+                        "graph_visualization_controller.py",
+                        "graph_visualization_main_ui.py",
+                        "__init__.py"
+                    ],
+                    "domain": {
+                        "files": [
+                            "table_controller.py",
+                            "__init__.py"
+                        ]
+                    },
+                    "visual_interface": {
+                        "files": [
+                            "example_graph.py",
+                            "example_table.py",
+                            "__init__.py"
+                        ]
+                    }
+                },
+                "main_navigation_control": {
+                    "files": [
+                        "main_theme.py",
+                        "navigation_control_main_controller.py",
+                        "navigation_control_main_ui.py",
+                        "__init__.py"
+                    ]
+                },
+                "models": {
+                    "files": [
+                        "base_feature_controller.py",
+                        "base_feature_ui.py",
+                        "changenotifier.py",
+                        "table_filter.py",
+                        "ui_button_data_model.py",
+                        "__init__.py"
+                    ]
+                },
+                "tests": {
+                    "files": [
+                        "empty_page.py",
+                        "tests_controller.py",
+                        "tests_main_ui.py",
+                        "__init__.py"
+                    ]
+                }
+            }
+        }
+    }
+}

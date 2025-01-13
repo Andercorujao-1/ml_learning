@@ -1,0 +1,7 @@
+{
+    "editor.fontFamily": "Fira Code",
+    "editor.fontLigatures": true,
+    "editor.formatOnSave": true,
+    "diffEditor.codeLens": true,
+    "files.autoSave": "afterDelay"
+}

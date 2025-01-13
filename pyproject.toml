@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "python_estudo"
+version = "1.0.0"
+description = "A Python project for learning and testing data visualization."
+authors = ["Anderson Gonçalves de Oliveira"]
+
+[build-system]
+requires = ["poetry>=1.2.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+polars = "^1.19"
+numpy = "^2.2"
+matplotlib = "^3.10"
+scikit-learn = "^1.2"
+SQLAlchemy = "^2.0"
+loguru = "^0.7"
+pydantic = "^2.10"
+asyncio = "^3.4"
+
+[tool.poetry.dev-dependencies]
+pytest = "^8.3"
+
+
+[tool.poetry.scripts]
+run-script = "python_estudo.main:run"
+
