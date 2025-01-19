@@ -6,6 +6,7 @@ def fDefaultButtons():
     return {
         "button1": {"text": "Table page", "userActionName": "changeToTablePage"},
         "button2": {"text": "Graph page", "userActionName": "changeToGraphPage"},
+        "button3": {"text": "Load Table", "userActionName": "loadMock_Agricultural_Data"},
     }
 
 def fPagesDict():
@@ -28,13 +29,17 @@ class GraphVisualizationController(BaseFeatureController):
 
         def changeToGraphPage(self):
             self.controller.changePage("graph_page")
+
+        def loadMockAgriculturalData(self):
+            pass
     
-    def __init__(self, style=None, firstPage=TablePage):
+    def __init__(self, style=None, firstPage=GraphPage):
         super().__init__(
             style=style,
             defaultPage=firstPage,
             pagesDict=fPagesDict(),
             buttonsData=fDefaultButtons()
+            falta fazer table controller e guardar aqui
         )
     
     def provideFeatureUi(self, parent):
