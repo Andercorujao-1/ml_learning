@@ -1,0 +1,9 @@
+{
+    "1": {
+        "dataset": "global-summary-of-the-month",
+        "boundingBox": "35.462327,-82.563951,35.412327,-82.513951",
+        "dataTypes": "TMIN,TMAX,PRCP",
+        "limit": "5",
+        "offset": 0
+    }
+}

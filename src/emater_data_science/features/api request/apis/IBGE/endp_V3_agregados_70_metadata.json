@@ -1,0 +1,13 @@
+#endp_V3_agregados_70_metadata.json
+{
+    "name": "endp_V3_agregados_70",
+    "endpointURL": "v3/agregados/70/periodos/-6/variaveis",
+    "update_interval_in_days": 7,
+    "table_classes": [
+        "AbateDeAnimais",
+        "Classificacoes",
+        "Series",
+        "Resultados"
+    ],
+    "params": [{}]
+}

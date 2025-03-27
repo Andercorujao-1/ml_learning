@@ -1,28 +1,35 @@
 [tool.poetry]
-name = "python_estudo"
+name = "emater_data_science"
 version = "1.0.0"
-description = "A Python project for learning and testing data visualization."
+packages = [
+    { include = "emater_data_science", from = "src" }
+]
+description = "A project for downloading data and creating ML models from it."
 authors = ["Anderson Gonçalves de Oliveira"]
 
 [build-system]
-requires = ["poetry>=1.2.0"]
+requires = ["poetry>=1.8.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
+aiohttp = "^3.8"
 python = "^3.12"
-polars = "^1.19"
+polars = "^1.24"
 numpy = "^2.2"
 matplotlib = "^3.10"
 scikit-learn = "^1.2"
 SQLAlchemy = "^2.0"
-loguru = "^0.7"
 pydantic = "^2.10"
-asyncio = "^3.4"
 
-[tool.poetry.dev-dependencies]
+
+
+[tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
 
 
 [tool.poetry.scripts]
-run-script = "python_estudo.main:run"
+run-script = "emater_data_science.main:run"
+
+[tool.mypy]
+strict = true
 

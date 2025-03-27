@@ -1,0 +1,6 @@
+#endpoints_list_IBGE.json
+{
+    "endpoints": [
+        "endp_V3_agregados_70"
+    ]
+}

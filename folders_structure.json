@@ -1,9 +1,10 @@
 {
-    "project_name": "python_estudo",
-    "last_updated": "2025-01-13 00:14:26",
+    "project_name": "emater_data_science",
+    "last_updated": "2025-02-12 08:00:50",
     "folders": {
         "files": [
             "folders_structure.json",
+            "generate_folder_structure.py",
             "pyproject.toml",
             "__init__.py"
         ],
@@ -16,7 +17,7 @@
             "files": [
                 "__init__.py"
             ],
-            "python_estudo": {
+            "emater_data_science": {
                 "files": [
                     "main.py",
                     "__init__.py"
@@ -24,7 +25,7 @@
                 "data": {
                     "files": [
                         "data_interface.py",
-                        "validade_windows_path.py",
+                        "generic_csv_fetcher.py",
                         "__init__.py"
                     ],
                     "api_data": {
@@ -33,54 +34,116 @@
                             "generic_api_fetcher.py"
                         ]
                     },
-                    "csv_data": {
-                        "files": [
-                            "csv_data_interface.py",
-                            "generic_csv_fetcher.py"
-                        ]
-                    },
                     "database_data": {
                         "files": [
                             "database_data_interface.py",
-                            "generic_sqlalchemy_fetcher.py"
+                            "generic_sqlalchemy_fetcher.py",
+                            "local_storage.py",
+                            "validade_windows_path.py"
                         ]
                     }
                 },
-                "feature_graph_visualization": {
+                "features": {
                     "files": [
-                        "graph_visualization_controller.py",
-                        "graph_visualization_main_ui.py",
-                        "__init__.py"
+                        "feature_controller.py",
+                        "feature_ui_builder.py"
                     ],
-                    "domain": {
+                    "api request": {
                         "files": [
-                            "table_controller.py",
-                            "__init__.py"
-                        ]
+                            "generate_folder_structure.py"
+                        ],
+                        "apis": {
+                            "files": [
+                                "abstract_build_api_metadata.py",
+                                "apiList.json",
+                                "api_loading.py",
+                                "interface_apis.py",
+                                "model_api_metadata.py",
+                                "__init__.py"
+                            ],
+                            "IBGE": {
+                                "files": [
+                                    "build_api_metadata_IBGE.py",
+                                    "endpoints_list_IBGE.json",
+                                    "endp_V3_agregados_70_metadata.json",
+                                    "endp_V3_agregados_70_tables.py",
+                                    "endp_V3_agregados_70_validation.py",
+                                    "interface_IBGE.py",
+                                    "metadata_IBGE.json",
+                                    "__init__.py"
+                                ]
+                            },
+                            "INPE": {
+                                "files": []
+                            },
+                            "NOAA_GFS": {
+                                "files": [
+                                    "data1.json",
+                                    "model.py",
+                                    "param_list.json",
+                                    "request.py"
+                                ]
+                            },
+                            "WTO World Bank": {
+                                "files": []
+                            }
+                        },
+                        "requests_preprocessing": {
+                            "files": [
+                                "filter_by_frequency.py",
+                                "interface_preprocessing.py"
+                            ]
+                        },
+                        "web_requests": {
+                            "files": [
+                                "api_web_requests.py",
+                                "api_web_requests2.py",
+                                "table_model_requests_history.py"
+                            ]
+                        }
                     },
-                    "visual_interface": {
+                    "graph_visualization": {
                         "files": [
-                            "example_graph.py",
-                            "example_table.py",
+                            "graph_visualization_controller.py",
+                            "graph_visualization_main_ui.py",
                             "__init__.py"
-                        ]
+                        ],
+                        "domain": {
+                            "files": [
+                                "table_controller.py",
+                                "__init__.py"
+                            ]
+                        },
+                        "visual_interface": {
+                            "files": [
+                                "graph_page.py",
+                                "table_page.py",
+                                "__init__.py"
+                            ]
+                        }
                     }
                 },
-                "main_navigation_control": {
+                "library": {
                     "files": [
-                        "main_theme.py",
-                        "navigation_control_main_controller.py",
-                        "navigation_control_main_ui.py",
-                        "__init__.py"
-                    ]
-                },
-                "models": {
-                    "files": [
-                        "base_feature_controller.py",
-                        "base_feature_ui.py",
                         "changenotifier.py",
                         "table_filter.py",
                         "ui_button_data_model.py",
+                        "__init__.py"
+                    ]
+                },
+                "logging": {
+                    "files": [
+                        "interface_logging.py",
+                        "logging_setup.py",
+                        "logging_table_model.py"
+                    ]
+                },
+                "main_navigation_control": {
+                    "files": [
+                        "feature_controllers_dict.py",
+                        "main_theme.py",
+                        "navigation_control_main_controller.py",
+                        "navigation_control_main_ui.py",
                         "__init__.py"
                     ]
                 },

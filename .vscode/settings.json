@@ -3,5 +3,8 @@
     "editor.fontLigatures": true,
     "editor.formatOnSave": true,
     "diffEditor.codeLens": true,
-    "files.autoSave": "afterDelay"
+    "files.autoSave": "afterDelay",
+    "python.analysis.extraPaths": [
+        "./src/emater_data_science/logging"
+    ]
 }
