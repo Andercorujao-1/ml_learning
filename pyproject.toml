@@ -20,6 +20,7 @@ matplotlib = "^3.10"
 scikit-learn = "^1.2"
 SQLAlchemy = "^2.0"
 pydantic = "^2.10"
+inmet-bdmep-fetcher = {git = "https://github.com/dankkom/inmet-bdmep-data.git"}
 
 
 

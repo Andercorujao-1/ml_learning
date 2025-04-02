@@ -1,5 +1,4 @@
 # src/emater_data_science/data/data_interface.py
-
 from collections.abc import Callable
 from typing import Literal, Any, TypeVar
 import polars as pl
@@ -9,7 +8,6 @@ from emater_data_science.data.api_data.api_data_interface import ApiDataInterfac
 from emater_data_science.data.database_data.database_data_interface import DatabaseDataInterface
 
 T = TypeVar("T", bound="DeclarativeBase")
-
 
 class DataInterface:
     _instance = None
@@ -36,7 +34,7 @@ class DataInterface:
         mapping: dict[str, str] = {}
         sources = [
             ("api", ApiDataInterface().fGetTablesList()),         # returns List[str]
-            ("database", DatabaseDataInterface().fGetTablesList()),  # returns List[str]
+            ("disk", DatabaseDataInterface().fGetTablesList()),  # returns List[str]
         ]
         for source_name, table_list in sources:
             for tableName in table_list:
@@ -67,7 +65,7 @@ class DataInterface:
         source = self.tablesMapping[tableName]
         if source == "api":
             ApiDataInterface().fFetchTable(tableName, callback, tableFilter)
-        elif source == "database":
+        elif source == "disk":
             DatabaseDataInterface().fFetchTable(tableName, callback, tableFilter)
         else:
             raise ValueError(f"Unknown source '{source}' for table '{tableName}'.")
@@ -75,7 +73,7 @@ class DataInterface:
     def fStoreTable(
         self,
         data: list[T],
-        storageTarget: Literal["disk", "server"] = "disk",
+        storageTarget: Literal["disk", "api"] = "disk",
     ) -> None:
         """
         Store the table data into the appropriate data source.
@@ -94,9 +92,9 @@ class DataInterface:
 
         if tableName not in self.tablesMapping:
             # New table: store using the provided storageTarget.
-            if storageTarget == "server":
+            if storageTarget == "api":
                 ApiDataInterface().fStoreTable(data=data)
-                self.tablesMapping[tableName] = "server"
+                self.tablesMapping[tableName] = "api"
             elif storageTarget == "disk":
                 DatabaseDataInterface().fStoreTable(data=data)
                 self.tablesMapping[tableName] = "disk"
@@ -107,9 +105,9 @@ class DataInterface:
         else:
             # Table exists: store using its mapped source.
             existingSource = self.tablesMapping[tableName]
-            if existingSource == "server":
+            if existingSource == "api":
                 ApiDataInterface().fStoreTable(data=data)
-            elif existingSource == "database":
+            elif existingSource == "disk":
                 DatabaseDataInterface().fStoreTable(data=data)
             else:
                 raise ValueError(
@@ -129,8 +127,8 @@ class DataInterface:
 
         source = self.tablesMapping[tableName]
         if source == "api":
-            ApiDataInterface().fDeleteTable(tableName, tableFilter)
-        elif source == "database":
+            ApiDataInterface().fDeleteRows(tableName, tableFilter)
+        elif source == "disk":
             DatabaseDataInterface().fDeleteRows(tableName, tableFilter)
         else:
             raise ValueError(f"Unknown source '{source}' for table '{tableName}'.")

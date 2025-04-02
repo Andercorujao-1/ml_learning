@@ -128,3 +128,5 @@ if __name__ == "__main__":
         await manager.fShutdown()
 
     asyncio.run(main())
+    from emater_data_science.data.data_interface import DataInterface
+    DataInterface().fShutdown()
