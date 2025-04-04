@@ -22,7 +22,7 @@ class ApiDataInterface:
     def fGetTablesList(self )-> list[str]:
         return []
 
-    def fStoreTable(self, data) -> None:
+    def fStoreTable(self,model, data) -> None:
         print(f"Simulating API POST /store. Data: {json.dumps([d.__dict__ for d in data], indent=2)}")
 
     def fFetchTable(self, tableName, callback, tableFilter) -> None:

@@ -1,5 +1,6 @@
 # src/emater_data_science/data/data_interface.py
 from collections.abc import Callable
+from datetime import date
 from typing import Literal, Any, TypeVar
 import polars as pl
 from sqlalchemy.orm import DeclarativeBase
@@ -15,7 +16,9 @@ class DataInterface:
     def __new__(cls, *args, **kwargs) -> "DataInterface":
         if cls._instance is None:
             cls._instance = super(DataInterface, cls).__new__(cls)
-        return cls._instance
+            return cls._instance
+        else:
+            return cls._instance
 
     def __init__(self) -> None:
         if hasattr(self, "_initialized") and self._initialized:
@@ -46,10 +49,12 @@ class DataInterface:
         return mapping
 
     def fFetchTable(
-        self,
-        tableName: str,
-        callback: Callable[[pl.DataFrame], None],
+        self,        tableName: str,
+        callback: Callable[[pl.DataFrame], None] | None,
         tableFilter: dict | None = None,
+        dateColumn: str | None = None,
+        startDate: date | None = None,
+        endDate: date | None = None
     ) -> None:
         """
         Fetch the table from the appropriate data source (API or database).
@@ -66,13 +71,14 @@ class DataInterface:
         if source == "api":
             ApiDataInterface().fFetchTable(tableName, callback, tableFilter)
         elif source == "disk":
-            DatabaseDataInterface().fFetchTable(tableName, callback, tableFilter)
+            DatabaseDataInterface().fFetchTable(tableName=tableName, callback=callback, tableFilter=tableFilter,
+                                                dateColumn=dateColumn, startDate=startDate, endDate=endDate)
         else:
             raise ValueError(f"Unknown source '{source}' for table '{tableName}'.")
 
     def fStoreTable(
         self,
-        data: list[T],
+        model: type[T], data:  pl.DataFrame,
         storageTarget: Literal["disk", "api"] = "disk",
     ) -> None:
         """
@@ -84,19 +90,18 @@ class DataInterface:
         :param data: A list of ORM objects representing rows from one SQLAlchemy table.
         :param storageTarget: The target storage ("disk" or "server") for new tables.
         """
-        if not data:
-            raise ValueError("No data provided.")
+   
 
         # Derive the table name from the first element.
-        tableName = type(data[0]).__table__.name  # type: ignore[attr-defined]
+        tableName = model.__table__.name  # type: ignore[attr-defined]
 
         if tableName not in self.tablesMapping:
             # New table: store using the provided storageTarget.
             if storageTarget == "api":
-                ApiDataInterface().fStoreTable(data=data)
+                ApiDataInterface().fStoreTable(model=model,data=data)
                 self.tablesMapping[tableName] = "api"
             elif storageTarget == "disk":
-                DatabaseDataInterface().fStoreTable(data=data)
+                DatabaseDataInterface().fStoreTable(model=model,data=data)
                 self.tablesMapping[tableName] = "disk"
             else:
                 raise ValueError(
@@ -106,13 +111,19 @@ class DataInterface:
             # Table exists: store using its mapped source.
             existingSource = self.tablesMapping[tableName]
             if existingSource == "api":
-                ApiDataInterface().fStoreTable(data=data)
+                ApiDataInterface().fStoreTable(model=model,data=data)
             elif existingSource == "disk":
-                DatabaseDataInterface().fStoreTable(data=data)
+                DatabaseDataInterface().fStoreTable(model=model,data=data)
             else:
                 raise ValueError(
                     f"Unknown source '{existingSource}' for table '{tableName}'."
                 )
+
+    def fQueueIsEmpty(self) -> bool:
+        """
+        Check if the queue is empty in the database.
+        """
+        return DatabaseDataInterface().fQueueIsEmpty()
 
     def fDeleteRowsFromTable(self, tableName: str, tableFilter: dict) -> None:
         """

@@ -4,7 +4,7 @@ from emater_data_science.data.database_data.central_database_connection import (
 from emater_data_science.data.database_data.database_logger_manager import (
     DatabaseLoggerManager,
 )
-
+import time
 
 class DatabaseDataInterface:
     _instance = None
@@ -23,19 +23,28 @@ class DatabaseDataInterface:
     def fGetTablesList(self) -> list[str]:
         return CentralDatabaseConnection().fListTables()
 
-    def fStoreTable(self, data) -> None:
-        CentralDatabaseConnection().fWrite(data=data)
+    def fStoreTable(self, model, data) -> None:
+        CentralDatabaseConnection().fWrite(model=model, data=data)
 
-    def fFetchTable(self, tableName, callback, tableFilter) -> None:
+    def fQueueIsEmpty(self) -> bool:
+        return CentralDatabaseConnection().fQueueIsEmpty()
+
+    def fFetchTable(self,        tableName: str,
+        callback,
+        tableFilter: dict | None = None,
+        dateColumn: str | None = None,
+        startDate= None,
+        endDate = None) -> None:
         CentralDatabaseConnection().fRead(
-            tableName=tableName, callback=callback, tableFilter=tableFilter 
+            tableName=tableName, callback=callback, tableFilter=tableFilter, dateColumn=dateColumn, startDate=startDate, endDate=endDate
         )
 
     def fDeleteRows(self, table, tableFilter) -> None:
         CentralDatabaseConnection().fDeleteRows(table=table, tableFilter=tableFilter)
 
     def fShutdown(self) -> None:
-        DatabaseLoggerManager().fShutdown()
+        print("Shutting down DatabaseDataInterface...")
+        time.sleep(0.2)
         CentralDatabaseConnection().fShutdown()
 
     def fAddLog(self, logTable) -> None:

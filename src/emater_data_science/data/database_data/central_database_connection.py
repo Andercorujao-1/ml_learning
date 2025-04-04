@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import date
 import os
 from threading import Thread, Lock, Event
 from queue import Queue, Empty
@@ -19,6 +20,7 @@ from sqlalchemy import (
 T = TypeVar("T", bound=DeclarativeBase)
 
 
+
 class CentralDatabaseConnection:
     _instance = None
 
@@ -36,23 +38,21 @@ class CentralDatabaseConnection:
         self._lock = Lock()
         self._engine: Engine | None = None
         self.metadata = MetaData()
+        self._is_shutting_down = False  # Flag to prevent enqueuing new tasks after shutdown begins.
         self._initialized = True
         self._ensureWorker()
 
     def _initializeDatabaseEngine(self, db_name: str = "Local_Database.db") -> None:
-        userprofile = os.environ.get("USERPROFILE")
-        if not userprofile:
-            raise EnvironmentError("Environment variable 'USERPROFILE' is not set.")
-        dbPath = os.path.join(
-            userprofile,
-            "OneDrive",
-            "Documentos",
-            "projects_data",
-            "emater_data_science",
-            db_name,
-        )
+        dbPath = os.path.join("C:\\emater_data_science", db_name)
         dbUrl = f"sqlite:///{dbPath}"
         self._engine = create_engine(url=dbUrl, echo=False)
+
+    def _enqueue_operation(self, operation: Callable[[], None]) -> None:
+        if self._is_shutting_down:
+            # Log a warning if needed; here we simply print a warning.
+            print("Warning: Attempt to enqueue an operation after shutdown has begun.")
+            return
+        self._operation_queue.put(operation)
 
     def _worker(self) -> None:
         while not self._stop_event.is_set():
@@ -63,7 +63,8 @@ class CentralDatabaseConnection:
             try:
                 operation()
             except Exception as op_err:
-                raise Exception("CentralDatabaseConnection::_worker - Error during operation.") from op_err
+                # Log the error and continue processing remaining operations.
+                print(f"Error during operation: {op_err}")
             finally:
                 self._operation_queue.task_done()
 
@@ -81,6 +82,9 @@ class CentralDatabaseConnection:
         tableName: str,
         callback: Callable[[pl.DataFrame], None] | None,
         tableFilter: dict | None = None,
+        dateColumn: str | None = None,
+        startDate: date | None = None,
+        endDate: date | None = None
     ) -> None:
         from emater_data_science.logging.log_in_disk import LogInDisk
 
@@ -91,8 +95,6 @@ class CentralDatabaseConnection:
         )
 
         def operation() -> None:
-            from emater_data_science.logging.log_in_disk import LogInDisk
-
             LogInDisk().log(
                 level="executionState",
                 message="CentralDatabaseConnection::fRead - Operation started execution.",
@@ -100,54 +102,76 @@ class CentralDatabaseConnection:
             )
             if self._engine is None:
                 raise ValueError("Database engine not initialized.")
+
             self.metadata.reflect(bind=self._engine, only=[tableName])
             if tableName not in self.metadata.tables:
-                error_message = f"Table '{tableName}' not found."
-                print(f"\n*** CRITICAL ERROR: {error_message} ***\n")
-                raise ValueError(error_message)
+                raise ValueError(f"Table '{tableName}' not found.")
+
             table = self.metadata.tables[tableName]
             query = select(table)
+
+            # Date filtering
+            if dateColumn and (startDate or endDate):
+                if dateColumn not in table.c:
+                    raise ValueError(f"Date column '{dateColumn}' not found in table '{tableName}'")
+                if startDate:
+                    query = query.where(table.c[dateColumn] >= startDate)
+                if endDate:
+                    query = query.where(table.c[dateColumn] <= endDate)
+
+            # General column = value filters
             if tableFilter:
                 for col, val in tableFilter.items():
                     if col in table.c:
                         query = query.where(table.c[col] == val)
+
             with self._engine.connect() as conn:
                 results = conn.execute(statement=query).fetchall()
+
             results_dicts = [dict(row._mapping) for row in results]
-            df = pl.DataFrame(results_dicts)
+
+            try:
+                df = pl.DataFrame(results_dicts, infer_schema_length=None)
+            except Exception as err:
+                from pprint import pprint
+                print("\n--- Failed to create DataFrame ---")
+                print(f"Error: {err}")
+                print(f"Sample rows ({min(5, len(results_dicts))}):")
+                pprint(results_dicts[:5])
+                raise
+
             if callback:
                 callback(df)
 
-        self._operation_queue.put(operation)
+        self._enqueue_operation(operation)
 
-    def fWrite(self, data: list[T]) -> None:
-        print('central database conections fWrite')
+    def fQueueIsEmpty(self) -> bool:
+        return self._operation_queue.empty()
+    
+
+    def fWrite(self, model: type[T], data: pl.DataFrame) -> None:
+       
+        table_obj: Table = cast(Table, model.__table__)
+        sample = data.head(2).to_dicts()
+        from emater_data_science.logging.logging_table_model import LoggingTable
         from emater_data_science.logging.log_in_disk import LogInDisk
 
-        truncated_data = data[:3]
-        LogInDisk().log(
-            level="executionState",
-            message="CentralDatabaseConnection::fWrite - Called.",
-            variablesJson=f"data (truncated)={truncated_data}",
-        )
-
-        def operation() -> None:
-            from emater_data_science.logging.log_in_disk import LogInDisk
-
+        # Log only if this operation was enqueued before shutdown began.
+        if not self._stop_event.is_set() and not issubclass(model, LoggingTable):
             LogInDisk().log(
                 level="executionState",
-                message="CentralDatabaseConnection::fWrite - Operation started execution.",
-                variablesJson=f"data (truncated)={truncated_data}",
+                message="CentralDatabaseConnection::fWrite - Called.",
+                variablesJson=f"data (truncated)={sample}",
             )
-            if not data:
-                return
-            if self._engine is None:
-                raise ValueError("Database engine not initialized.")
-            engine = self._engine
-            table_obj: Table = cast(Table, type(data[0]).__table__)
-            if not inspect(engine).has_table(table_obj.name):
-                from emater_data_science.logging.log_in_disk import LogInDisk
 
+        if self._engine is None:
+            raise ValueError("Database engine not initialized.")
+        engine = self._engine
+        if not inspect(engine).has_table(table_obj.name):
+            def createTable() -> None:
+                if inspect(engine).has_table(table_obj.name):
+                    return
+                print(f'creating table {table_obj.name}')
                 LogInDisk().log(
                     level="executionState",
                     message=f"CentralDatabaseConnection::fWrite - Table '{table_obj.name}' not found. Creating table.",
@@ -157,40 +181,39 @@ class CentralDatabaseConnection:
                     table_obj.create(bind=engine)
                     self.metadata.reflect(bind=engine, only=[table_obj.name])
                 except Exception:
-                    # Print the full data (no truncation) without printing the error details.
                     print(
-                        f"\n*** CRITICAL ERROR: Exception while creating table '{table_obj.name}'. Data: {data} ***\n"
+                        f"\n*** CRITICAL ERROR: Exception while creating table '{table_obj.name}'. Data: {sample} ***\n"
                     )
                     raise
-            try:
-                data_dicts = [
-                    {col.name: getattr(obj, col.name) for col in table_obj.columns}
-                    for obj in data
-                ]
-            except Exception:
-                print(
-                    f"\n*** CRITICAL ERROR: Exception converting objects. Data: {data} ***\n"
+
+            self._enqueue_operation(createTable)
+
+        def insertData() -> None:
+            print(f"inserting data {table_obj.name}")
+            nonlocal data
+            if not self._stop_event.is_set() and not issubclass(model, LoggingTable):
+                LogInDisk().log(
+                    level="executionState",
+                    message="CentralDatabaseConnection::fWrite - Operation started execution.",
+                    variablesJson=f"data (truncated)={sample}",
                 )
-                raise
+            dataAsDict = data.to_dicts()
+            del data
+            import gc
+            gc.collect()
+
             try:
                 with engine.connect() as conn:
                     stmt = insert(table_obj)
-                    conn.execute(stmt, data_dicts)
+                    conn.execute(stmt, dataAsDict)
                     conn.commit()
             except Exception:
                 print(
-                    f"\n*** CRITICAL ERROR: Exception during bulk insert into '{table_obj.name}'. Data: {data} ***\n"
+                    f"\n*** CRITICAL ERROR: Exception during bulk insert into '{table_obj.name}'. Data: {sample} ***\n"
                 )
                 raise
 
-        self._operation_queue.put(operation)
-
-    def fListTables(self) -> list[str]:
-        if self._engine is None:
-            raise ValueError("Database engine not initialized.")
-        self.metadata.reflect(bind=self._engine)
-        tables = list(self.metadata.tables.keys())
-        return tables
+        self._enqueue_operation(insertData)
 
     def fDeleteRows(self, table: Table, tableFilter: dict) -> None:
         from emater_data_science.logging.log_in_disk import LogInDisk
@@ -219,12 +242,36 @@ class CentralDatabaseConnection:
                 conn.execute(statement=stmt)
                 conn.commit()
 
-        self._operation_queue.put(operation)
+        self._enqueue_operation(operation)
+
+    def fListTables(self) -> list[str]:
+        if self._engine is None:
+            raise ValueError("Database engine not initialized.")
+        self.metadata.reflect(bind=self._engine)
+        tables = list(self.metadata.tables.keys())
+        return tables
 
     def fShutdown(self) -> None:
-        self._operation_queue.join()  # Wait for all operations to complete.
+        # Mark shutdown so that no new operations will be enqueued.
+        self._is_shutting_down = True
+
+        # Enqueue a finalization operation that shuts down the logger manager and disposes the engine.
+        def fFinalizeEverything():
+            print("Finalizing everything...")
+            from emater_data_science.data.database_data.database_logger_manager import DatabaseLoggerManager
+            DatabaseLoggerManager().fShutdown()
+
+
+        # Directly enqueue finalization even if _is_shutting_down is True.
+        self._operation_queue.put(fFinalizeEverything)
+
+        # Wait for all queued operations to finish.
+        self._operation_queue.join()
+        print("shutdown complete")
+
+        # Signal the worker to stop and wait for it to finish.
         self._stop_event.set()
         if self._worker_thread:
-            self._worker_thread.join(timeout=200)
+            self._worker_thread.join()
         if self._engine:
             self._engine.dispose()
