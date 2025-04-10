@@ -81,12 +81,7 @@ class DatabaseLoggerManager:
         self._flush()
 
     def fShutdown(self) -> None:
-        """
-        Initiate shutdown:
-         - Set the shutdown flag so that no new logs are accepted.
-         - Signal the flush thread to stop and wait for it to finish.
-         - The final flush ensures that all logs enqueued before shutdown are written.
-        """
+
         self._is_shutting_down = True
         self.stop_event.set()
         if self.flush_thread:

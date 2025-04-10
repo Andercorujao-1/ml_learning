@@ -43,8 +43,9 @@ class DatabaseDataInterface:
         CentralDatabaseConnection().fDeleteRows(table=table, tableFilter=tableFilter)
 
     def fShutdown(self) -> None:
-        print("Shutting down DatabaseDataInterface...")
-        time.sleep(0.2)
+        while not CentralDatabaseConnection().fQueueIsEmpty():
+            time.sleep(1)
+        DatabaseLoggerManager().fShutdown()
         CentralDatabaseConnection().fShutdown()
 
     def fAddLog(self, logTable) -> None:

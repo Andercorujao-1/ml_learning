@@ -254,22 +254,7 @@ class CentralDatabaseConnection:
     def fShutdown(self) -> None:
         # Mark shutdown so that no new operations will be enqueued.
         self._is_shutting_down = True
-
-        # Enqueue a finalization operation that shuts down the logger manager and disposes the engine.
-        def fFinalizeEverything():
-            print("Finalizing everything...")
-            from emater_data_science.data.database_data.database_logger_manager import DatabaseLoggerManager
-            DatabaseLoggerManager().fShutdown()
-
-
-        # Directly enqueue finalization even if _is_shutting_down is True.
-        self._operation_queue.put(fFinalizeEverything)
-
-        # Wait for all queued operations to finish.
         self._operation_queue.join()
-        print("shutdown complete")
-
-        # Signal the worker to stop and wait for it to finish.
         self._stop_event.set()
         if self._worker_thread:
             self._worker_thread.join()

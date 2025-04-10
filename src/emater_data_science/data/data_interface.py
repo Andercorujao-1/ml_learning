@@ -87,7 +87,7 @@ class DataInterface:
         - If the table is new (not in the mapping), store it using the provided storageTarget and update the mapping.
         - If the table already exists in the mapping, store it using its mapped source.
 
-        :param data: A list of ORM objects representing rows from one SQLAlchemy table.
+        :param model: ORM class that extends DeclarativeBase representing one SQLAlchemy table.
         :param storageTarget: The target storage ("disk" or "server") for new tables.
         """
    
